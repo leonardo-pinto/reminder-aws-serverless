@@ -23,6 +23,24 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
 
     // TODO API GATEWAY ROUTES W/ LAMBDA INTEGRATION
 
+    const remindersDdb = new dynamodb.Table(this, "RemindersDdb", {
+      tableName: "reminders",
+      partitionKey: {
+        name: "pk",
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: dynamodb.AttributeType.STRING,
+      },
+      timeToLiveAttribute: "ttl",
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      stream: dynamodb.StreamViewType.OLD_IMAGE,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
+    });
+
     // TODO LAMBDA
 
     // TODO EMAIL
