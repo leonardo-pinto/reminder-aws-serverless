@@ -3,6 +3,8 @@ import { Construct } from "constructs";
 import * as cwlogs from "aws-cdk-lib/aws-logs";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as lambdaNodeJS from "aws-cdk-lib/aws-lambda-nodejs";
 
 export class ReminderAwsServerlessStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -42,6 +44,25 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
     });
 
     // TODO LAMBDA
+
+    const writeReminderHandler = new lambdaNodeJS.NodejsFunction(
+      this,
+      "WriteReminderFunction",
+      {
+        functionName: "WriteReminderFunction",
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: "lambda/reminders/writeReminderFunction.ts",
+        handler: "handler",
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(2),
+        bundling: {
+          minify: true,
+          sourceMap: false,
+        },
+        tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
+      }
+    );
 
     // TODO EMAIL
 
