@@ -26,12 +26,12 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
     const remindersDdb = new dynamodb.Table(this, "RemindersDdb", {
       tableName: "reminders",
       partitionKey: {
-        name: "pk",
+        name: "userId",
         type: dynamodb.AttributeType.STRING,
       },
       sortKey: {
-        name: "sk",
-        type: dynamodb.AttributeType.STRING,
+        name: "ttl",
+        type: dynamodb.AttributeType.NUMBER,
       },
       timeToLiveAttribute: "ttl",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -57,10 +57,16 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           minify: true,
           sourceMap: false,
         },
+        environment: {
+          REMINDERS_DDB: remindersDdb.tableName,
+        },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
       }
     );
+
+    // TODO - ADD GRANULAR PERMISSIONS
+    remindersDdb.grantWriteData(writeReminderHandler);
 
     const fetchReminderHandler = new lambdaNodeJS.NodejsFunction(
       this,
@@ -76,10 +82,16 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           minify: true,
           sourceMap: false,
         },
+        environment: {
+          REMINDERS_DDB: remindersDdb.tableName,
+        },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
       }
     );
+
+    // TODO - ADD GRANULAR PERMISSIONS
+    remindersDdb.grantReadData(fetchReminderHandler);
 
     // TODO API GATEWAY ROUTES W/ LAMBDA INTEGRATION
     const remindersResource = api.root.addResource("reminders");
