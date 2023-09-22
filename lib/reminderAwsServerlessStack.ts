@@ -23,8 +23,6 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
 
     // TODO COGNITO
 
-    // TODO API GATEWAY ROUTES W/ LAMBDA INTEGRATION
-
     const remindersDdb = new dynamodb.Table(this, "RemindersDdb", {
       tableName: "reminders",
       partitionKey: {
@@ -83,6 +81,18 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
       }
     );
 
+    // TODO API GATEWAY ROUTES W/ LAMBDA INTEGRATION
+    const remindersResource = api.root.addResource("reminders");
+
+    const fetchReminderIntegration = new apigateway.LambdaIntegration(
+      fetchReminderHandler
+    );
+    const writeReminderIntegration = new apigateway.LambdaIntegration(
+      writeReminderHandler
+    );
+
+    remindersResource.addMethod("GET", fetchReminderIntegration);
+    remindersResource.addMethod("POST", writeReminderIntegration);
 
     // TODO EMAIL
 
