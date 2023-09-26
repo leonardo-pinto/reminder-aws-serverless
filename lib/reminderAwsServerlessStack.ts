@@ -252,24 +252,5 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
         },
       }
     );
-
-    const subscribeEmailHandler = new lambdaNodeJS.NodejsFunction(
-      this,
-      "SubscribeEmailFunction",
-      {
-        functionName: "SubscribeEmailFunction",
-        runtime: lambda.Runtime.NODEJS_16_X,
-        entry: "lambda/emails/subscribeEmailFunction.ts",
-        handler: "handler",
-        memorySize: 128,
-        timeout: cdk.Duration.seconds(2),
-        bundling: {
-          minify: true,
-          sourceMap: false,
-        },
-        tracing: lambda.Tracing.ACTIVE,
-        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
-      }
-    );
   }
 }
