@@ -5,6 +5,9 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as lambdaNodeJS from "aws-cdk-lib/aws-lambda-nodejs";
+import * as lambdaEventSource from "aws-cdk-lib/aws-lambda-event-sources";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 
 export class ReminderAwsServerlessStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -21,17 +24,15 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
       },
     });
 
-    // TODO COGNITO
-
-    const remindersDdb = new dynamodb.Table(this, "RemindersDdb", {
-      tableName: "reminders",
+    const tabledDb = new dynamodb.Table(this, "RemindersDdb", {
+      tableName: "table",
       partitionKey: {
-        name: "userId",
+        name: "pk",
         type: dynamodb.AttributeType.STRING,
       },
       sortKey: {
-        name: "ttl",
-        type: dynamodb.AttributeType.NUMBER,
+        name: "sk",
+        type: dynamodb.AttributeType.STRING,
       },
       timeToLiveAttribute: "ttl",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -58,7 +59,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           sourceMap: false,
         },
         environment: {
-          REMINDERS_DDB: remindersDdb.tableName,
+          REMINDERS_DDB: tabledDb.tableName,
         },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
@@ -66,7 +67,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
     );
 
     // TODO - ADD GRANULAR PERMISSIONS
-    remindersDdb.grantWriteData(writeReminderHandler);
+    tabledDb.grantWriteData(writeReminderHandler);
 
     const fetchReminderHandler = new lambdaNodeJS.NodejsFunction(
       this,
@@ -83,7 +84,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           sourceMap: false,
         },
         environment: {
-          REMINDERS_DDB: remindersDdb.tableName,
+          REMINDERS_DDB: tabledDb.tableName,
         },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
@@ -91,23 +92,153 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
     );
 
     // TODO - ADD GRANULAR PERMISSIONS
-    remindersDdb.grantReadData(fetchReminderHandler);
+    tabledDb.grantReadData(fetchReminderHandler);
+
+    const sendReminderNotificationHandler = new lambdaNodeJS.NodejsFunction(
+      this,
+      "SendReminderNotificationFunction",
+      {
+        functionName: "SendReminderNotificationFunction",
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: "lambda/reminders/sendReminderNotificationFunction.ts",
+        handler: "handler",
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(2),
+        bundling: {
+          minify: true,
+          sourceMap: false,
+        },
+        tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
+      }
+    );
+
+    sendReminderNotificationHandler.addEventSource(
+      new lambdaEventSource.DynamoEventSource(tabledDb, {
+        startingPosition: lambda.StartingPosition.LATEST,
+        retryAttempts: 0,
+        filters: [
+          lambda.FilterCriteria.filter({
+            eventName: lambda.FilterRule.isEqual("REMOVE"),
+          }),
+        ],
+      })
+    );
+
+    const sendReminderNotificationSESPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["ses:SendEmail", "ses:SendRawEmail"],
+      resources: ["*"],
+    });
+    sendReminderNotificationHandler.addToRolePolicy(
+      sendReminderNotificationSESPolicy
+    );
+    
+    // COGNITO
+
+    const postConfirmationHandler = new lambdaNodeJS.NodejsFunction(
+      this,
+      "PostConfirmationFunction",
+      {
+        functionName: "PostConfirmationFunction",
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: "lambda/auth/postConfirmationFunction.ts",
+        handler: "handler",
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(2),
+        bundling: {
+          minify: true,
+          sourceMap: false,
+        },
+        environment: {
+          REMINDERS_DDB: tabledDb.tableName,
+        },
+        tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
+      }
+    );
+
+    tabledDb.grantWriteData(postConfirmationHandler);
+
+    const postConfirmationSESPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["ses:VerifyEmailIdentity"],
+      resources: ["*"],
+    });
+    postConfirmationHandler.addToRolePolicy(postConfirmationSESPolicy);
+
+    const userPool = new cognito.UserPool(this, "UserPool", {
+      userPoolName: "UserPool",
+      signInCaseSensitive: false,
+      selfSignUpEnabled: true,
+      userVerification: {
+        emailSubject: "Verify your email for the Reminder App",
+        emailBody:
+          "Thanks for signing up to Reminder App. Please {##Verify Email##}",
+        emailStyle: cognito.VerificationEmailStyle.LINK,
+      },
+      signInAliases: {
+        username: false,
+        email: true,
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireDigits: true,
+      },
+      standardAttributes: {
+        fullname: {
+          required: true,
+          mutable: false,
+        },
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      lambdaTriggers: {
+        postConfirmation: postConfirmationHandler,
+      },
+    });
+
+    userPool.addDomain("UserDomain", {
+      cognitoDomain: {
+        domainPrefix: "reminder-app-user",
+      },
+    });
+
+    userPool.addClient("user-client", {
+      userPoolClientName: "userClient",
+      authFlows: {
+        userPassword: true,
+      },
+      accessTokenValidity: cdk.Duration.minutes(60),
+      refreshTokenValidity: cdk.Duration.days(7),
+      oAuth: {
+        scopes: [cognito.OAuthScope.EMAIL],
+      },
+    });
+
+    const authorizer = new apigateway.CfnAuthorizer(this, "CfnAuthorizer", {
+      restApiId: api.restApiId,
+      name: "APIGatewayAuthorizer",
+      type: "COGNITO_USER_POOLS",
+      identitySource: "method.request.header.Authorization",
+      providerArns: [userPool.userPoolArn],
+    });
 
     // TODO API GATEWAY ROUTES W/ LAMBDA INTEGRATION
     const remindersResource = api.root.addResource("reminders");
 
-    const fetchReminderIntegration = new apigateway.LambdaIntegration(
-      fetchReminderHandler
+    remindersResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(fetchReminderHandler)
     );
-    const writeReminderIntegration = new apigateway.LambdaIntegration(
-      writeReminderHandler
+    remindersResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(writeReminderHandler),
+      {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizer: {
+          authorizerId: authorizer.ref,
+        },
+      }
     );
-
-    remindersResource.addMethod("GET", fetchReminderIntegration);
-    remindersResource.addMethod("POST", writeReminderIntegration);
-
-    // TODO EMAIL
-
-    // TODO SMS
   }
 }
