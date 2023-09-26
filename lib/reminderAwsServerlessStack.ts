@@ -59,7 +59,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           sourceMap: false,
         },
         environment: {
-          REMINDERS_DDB: tabledDb.tableName,
+          TABLE_DDB: tabledDb.tableName,
         },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
@@ -84,15 +84,20 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           sourceMap: false,
         },
         environment: {
-          REMINDERS_DDB: tabledDb.tableName,
+          TABLE_DDB: tabledDb.tableName,
         },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
       }
     );
 
-    // TODO - ADD GRANULAR PERMISSIONS
-    tabledDb.grantReadData(fetchReminderHandler);
+    const fetchRemindersDdbPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["dynamodb:Query"],
+      resources: [tabledDb.tableArn],
+    });
+
+    fetchReminderHandler.addToRolePolicy(fetchRemindersDdbPolicy);
 
     const sendReminderNotificationHandler = new lambdaNodeJS.NodejsFunction(
       this,
@@ -133,7 +138,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
     sendReminderNotificationHandler.addToRolePolicy(
       sendReminderNotificationSESPolicy
     );
-    
+
     // COGNITO
 
     const postConfirmationHandler = new lambdaNodeJS.NodejsFunction(
@@ -151,7 +156,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
           sourceMap: false,
         },
         environment: {
-          REMINDERS_DDB: tabledDb.tableName,
+          TABLE_DDB: tabledDb.tableName,
         },
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
@@ -228,11 +233,83 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
 
     remindersResource.addMethod(
       "GET",
-      new apigateway.LambdaIntegration(fetchReminderHandler)
+      new apigateway.LambdaIntegration(fetchReminderHandler),
+      {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizer: {
+          authorizerId: authorizer.ref,
+        },
+      }
     );
+
     remindersResource.addMethod(
       "POST",
       new apigateway.LambdaIntegration(writeReminderHandler),
+      {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizer: {
+          authorizerId: authorizer.ref,
+        },
+      }
+    );
+
+    const subscribeEmailHandler = new lambdaNodeJS.NodejsFunction(
+      this,
+      "SubscribeEmailFunction",
+      {
+        functionName: "SubscribeEmailFunction",
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: "lambda/emails/subscribeEmailFunction.ts",
+        handler: "handler",
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(2),
+        bundling: {
+          minify: true,
+          sourceMap: false,
+        },
+        tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
+      }
+    );
+
+    const fetchEmailHandler = new lambdaNodeJS.NodejsFunction(
+      this,
+      "FetchEmailFunction",
+      {
+        functionName: "FetchEmailFunction",
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: "lambda/emails/fetchEmailFunction.ts",
+        handler: "handler",
+        memorySize: 128,
+        timeout: cdk.Duration.seconds(2),
+        bundling: {
+          minify: true,
+          sourceMap: false,
+        },
+        environment: {
+          TABLE_DDB: tabledDb.tableName,
+        },
+        tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
+      }
+    );
+
+    const emailsResource = api.root.addResource("emails");
+
+    emailsResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(subscribeEmailHandler),
+      {
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+        authorizer: {
+          authorizerId: authorizer.ref,
+        },
+      }
+    );
+
+    emailsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(fetchEmailHandler),
       {
         authorizationType: apigateway.AuthorizationType.COGNITO,
         authorizer: {
