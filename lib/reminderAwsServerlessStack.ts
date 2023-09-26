@@ -271,51 +271,5 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
       }
     );
-
-    const fetchEmailHandler = new lambdaNodeJS.NodejsFunction(
-      this,
-      "FetchEmailFunction",
-      {
-        functionName: "FetchEmailFunction",
-        runtime: lambda.Runtime.NODEJS_16_X,
-        entry: "lambda/emails/fetchEmailFunction.ts",
-        handler: "handler",
-        memorySize: 128,
-        timeout: cdk.Duration.seconds(2),
-        bundling: {
-          minify: true,
-          sourceMap: false,
-        },
-        environment: {
-          TABLE_DDB: tabledDb.tableName,
-        },
-        tracing: lambda.Tracing.ACTIVE,
-        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
-      }
-    );
-
-    const emailsResource = api.root.addResource("emails");
-
-    emailsResource.addMethod(
-      "POST",
-      new apigateway.LambdaIntegration(subscribeEmailHandler),
-      {
-        authorizationType: apigateway.AuthorizationType.COGNITO,
-        authorizer: {
-          authorizerId: authorizer.ref,
-        },
-      }
-    );
-
-    emailsResource.addMethod(
-      "GET",
-      new apigateway.LambdaIntegration(fetchEmailHandler),
-      {
-        authorizationType: apigateway.AuthorizationType.COGNITO,
-        authorizer: {
-          authorizerId: authorizer.ref,
-        },
-      }
-    );
   }
 }
