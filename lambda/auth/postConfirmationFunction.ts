@@ -1,7 +1,7 @@
 import { Callback, Context, PostConfirmationTriggerEvent } from "aws-lambda";
 import { DynamoDB, SES } from "aws-sdk";
 
-const remindersDdb = process.env.REMINDERS_DDB!;
+const tableDdb = process.env.TABLE_DDB!;
 const dbClient = new DynamoDB.DocumentClient();
 const sesClient = new SES();
 
@@ -14,7 +14,7 @@ export async function handler(
 
   await dbClient
     .put({
-      TableName: remindersDdb,
+      TableName: tableDdb,
       Item: {
         pk: `userId#${event.userName}`,
         sk: "METADATA",
