@@ -242,6 +242,33 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
       }
     );
 
+    const createReminderRequestValidator = new apigateway.RequestValidator(
+      this,
+      "createReminderRequestValidator",
+      {
+        restApi: api,
+        requestValidatorName: "CreateReminderRequestValidator",
+        validateRequestBody: true,
+      }
+    );
+
+    const reminderModel = new apigateway.Model(this, "ReminderModel", {
+      modelName: "ReminderModel",
+      restApi: api,
+      schema: {
+        type: apigateway.JsonSchemaType.OBJECT,
+        properties: {
+          content: {
+            type: apigateway.JsonSchemaType.STRING,
+          },
+          reminderDate: {
+            type: apigateway.JsonSchemaType.STRING,
+          },
+        },
+        required: ["content", "reminderDate"],
+      },
+    });
+
     remindersResource.addMethod(
       "POST",
       new apigateway.LambdaIntegration(writeReminderHandler),
@@ -249,6 +276,10 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
         authorizationType: apigateway.AuthorizationType.COGNITO,
         authorizer: {
           authorizerId: authorizer.ref,
+        },
+        requestValidator: createReminderRequestValidator,
+        requestModels: {
+          "application/json": reminderModel,
         },
       }
     );
