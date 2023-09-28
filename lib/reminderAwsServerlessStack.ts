@@ -66,7 +66,6 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
       }
     );
 
-    // TODO - ADD GRANULAR PERMISSIONS
     tabledDb.grantWriteData(writeReminderHandler);
 
     const fetchReminderHandler = new lambdaNodeJS.NodejsFunction(
@@ -162,7 +161,6 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0,
       }
     );
-
     tabledDb.grantWriteData(postConfirmationHandler);
 
     const postConfirmationSESPolicy = new iam.PolicyStatement({
@@ -179,8 +177,8 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
       userVerification: {
         emailSubject: "Verify your email for the Reminder App",
         emailBody:
-          "Thanks for signing up to Reminder App. Please {##Verify Email##}",
-        emailStyle: cognito.VerificationEmailStyle.LINK,
+          "Thanks for signing up to Reminder App. Your verification code is {####}",
+        emailStyle: cognito.VerificationEmailStyle.CODE,
       },
       signInAliases: {
         username: false,
@@ -228,7 +226,6 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
       providerArns: [userPool.userPoolArn],
     });
 
-    // TODO API GATEWAY ROUTES W/ LAMBDA INTEGRATION
     const remindersResource = api.root.addResource("reminders");
 
     remindersResource.addMethod(
