@@ -5,27 +5,39 @@ const tableDdb = process.env.TABLE_DDB!;
 const dbClient = new DynamoDB.DocumentClient();
 const sesClient = new SES();
 
+interface User {
+  pk: string;
+  sk: string;
+  name: string;
+  email: string;
+  ttl?: number;
+  createdAt: number;
+}
+
 export async function handler(
   event: PostConfirmationTriggerEvent,
-  context: Context,
+  _context: Context,
   callback: Callback
 ): Promise<void> {
-  console.log(event);
+  const user: User = {
+    pk: `userId#${event.userName}`,
+    sk: "METADATA#",
+    name: event.request.userAttributes.name,
+    email: event.request.userAttributes.email,
+    ttl: 0,
+    createdAt: Date.now(),
+  };
 
   await dbClient
     .put({
       TableName: tableDdb,
-      Item: {
-        pk: `userId#${event.userName}`,
-        sk: "METADATA",
-        name: event.request.userAttributes.name,
-        email: event.request.userAttributes.email,
-        ttl: 0,
-        createdAt: Date.now(),
-      },
+      Item: user,
     })
     .promise();
 
+  console.log(
+    `Sending SES subscription to ${event.request.userAttributes.email}`
+  );
   await sesClient
     .verifyEmailIdentity({
       EmailAddress: event.request.userAttributes.email,
