@@ -209,7 +209,7 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
     userPool.addClient("user-client", {
       userPoolClientName: "userClient",
       authFlows: {
-        userPassword: true,
+        userSrp: true,
       },
       accessTokenValidity: cdk.Duration.minutes(60),
       refreshTokenValidity: cdk.Duration.days(7),
