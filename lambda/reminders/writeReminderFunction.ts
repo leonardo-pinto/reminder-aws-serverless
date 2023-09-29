@@ -33,9 +33,8 @@ export async function handler(
   try {
     const reminderRequest = JSON.parse(event.body!) as Reminder;
 
-    // TODO ADD TTL CALCULATION BASED ON INPUT
-    const timestamp = Date.now();
-    const ttl = ~~(timestamp / 1000 + 1 * 60);
+    const timestamp = new Date(reminderRequest.reminderDate);
+    const ttl = ~~(timestamp / 1000);
     const reminderId = uuid();
 
     const reminder: ReminderRepository = {
@@ -45,7 +44,7 @@ export async function handler(
       content: reminderRequest.content,
       email: event.requestContext.authorizer!.claims.email,
       reminderDate: reminderRequest.reminderDate,
-      createdAt: timestamp,
+      createdAt: Date.now(),
     };
 
     await dbClient
@@ -57,6 +56,9 @@ export async function handler(
 
     return {
       statusCode: 201,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
       body: JSON.stringify({
         ...reminderRequest,
         email: reminder.email,
@@ -66,6 +68,9 @@ export async function handler(
     console.error((error as Error).message);
     return {
       statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
       body: (error as Error).message,
     };
   }
