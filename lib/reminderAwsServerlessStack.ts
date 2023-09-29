@@ -22,6 +22,9 @@ export class ReminderAwsServerlessStack extends cdk.Stack {
         accessLogDestination: new apigateway.LogGroupLogDestination(logGroup),
         accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields(),
       },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+      },
     });
 
     const tabledDb = new dynamodb.Table(this, "RemindersDdb", {
