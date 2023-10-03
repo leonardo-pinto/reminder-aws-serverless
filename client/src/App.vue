@@ -22,9 +22,12 @@
         header="Create new reminder"
         id="dialog"
       >
-        <CreateReminder @close="showCreateReminder = false"></CreateReminder
+        <CreateReminder
+          @close="showCreateReminder = false"
+          @created="updateKey"
+        ></CreateReminder
       ></Dialog>
-      <RemindersList></RemindersList>
+      <RemindersList :key="updatedAt"></RemindersList>
       <TheFooter></TheFooter>
     </template>
   </authenticator>
@@ -50,8 +53,14 @@ const services = {
     return result;
   },
 };
-
+const updatedAt = ref("");
 const showCreateReminder = ref(false);
+
+// Method create to force components RemindersList re-render
+// when a reminder is created, so the reminders list is automatically updated
+function updateKey() {
+  updatedAt.value = new Date().toString();
+}
 </script>
 
 <style>

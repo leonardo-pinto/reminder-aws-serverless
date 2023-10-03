@@ -37,7 +37,6 @@ async function getReminders() {
     isLoading.value = false;
   }
 }
-
 getReminders();
 </script>
 

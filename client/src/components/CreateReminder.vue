@@ -33,7 +33,7 @@ const reminderContent = ref("");
 const reminderDate = ref("");
 const minDate = ref(new Date());
 const errors: { [key: string]: string } = reactive({});
-const emit = defineEmits(["close"]);
+const emit = defineEmits(["close", "created"]);
 
 function validateEmptyField(value: string, fieldName: string) {
   errors[fieldName] =
@@ -61,6 +61,7 @@ async function saveReminder() {
   };
   await createReminder(reminderRequest);
   emit("close");
+  emit("created");
 }
 </script>
 
