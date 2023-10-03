@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
-import { ReminderAwsServerlessStack } from "../lib/reminderAwsServerlessStack";
-import { ReminderAwsServerlessClientStack } from "../lib/reminderAwsServerlessClientStack";
+import { ApiStack } from "../lib/apiStack";
+import { ClientStack } from "../lib/clientStack";
 
 const app = new cdk.App();
 
@@ -11,8 +11,6 @@ const env: cdk.Environment = {
   region: process.env.AWS_REGION,
 };
 
-new ReminderAwsServerlessStack(app, "ReminderAwsServerlessStack", { env });
+new ApiStack(app, "ApiStack", { env });
 
-new ReminderAwsServerlessClientStack(app, "ReminderAwsServerlessClientStack", {
-  env,
-});
+new ClientStack(app, "ClientStack", { env });
