@@ -27,13 +27,21 @@ export class ClientStack extends cdk.Stack {
     );
     bucket.grantRead(originAccessIdentity);
 
-    new cloudfront.Distribution(this, "CloudfrontDistribution", {
-      defaultRootObject: "index.html",
-      defaultBehavior: {
-        origin: new cloudfrontOrigins.S3Origin(bucket, {
-          originAccessIdentity,
-        }),
-      },
+    const cloudFrontDistribution = new cloudfront.Distribution(
+      this,
+      "CloudfrontDistribution",
+      {
+        defaultRootObject: "index.html",
+        defaultBehavior: {
+          origin: new cloudfrontOrigins.S3Origin(bucket, {
+            originAccessIdentity,
+          }),
+        },
+      }
+    );
+
+    new cdk.CfnOutput(this, "CloudFront", {
+      value: cloudFrontDistribution.distributionDomainName,
     });
   }
 }
