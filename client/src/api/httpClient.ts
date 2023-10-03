@@ -2,7 +2,7 @@ import axios from "axios";
 import { Auth } from "aws-amplify";
 
 const httpClient = axios.create({
-  baseURL: "https://73no0hex3c.execute-api.us-east-1.amazonaws.com/prod/",
+  baseURL: import.meta.env.VITE_AWS_API_GATEWAY_URL,
   headers: {
     "Content-Type": "application/json",
   },

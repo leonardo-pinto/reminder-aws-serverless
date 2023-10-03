@@ -15,9 +15,10 @@ import "primeicons/primeicons.css";
 
 Amplify.configure({
   Auth: {
-    region: "us-east-1",
-    userPoolId: "us-east-1_K6kPna9us",
-    userPoolWebClientId: "32snaqpscgt8j4mqcp1gnmsqqn",
+    region: import.meta.env.VITE_AWS_REGION,
+    userPoolId: import.meta.env.VITE_AWS_COGNITO_USER_POOL_ID,
+    userPoolWebClientId: import.meta.env
+      .VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID,
     authenticationFowType: "USER_SRP_AUTH",
   },
 });
