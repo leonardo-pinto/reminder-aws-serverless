@@ -38,7 +38,7 @@ header div {
 
 img {
   padding: 1rem;
-  width: 10rem;
+  width: 8rem;
 }
 
 #sign-out-btn {
