@@ -104,7 +104,7 @@ After the deployment is completed, you should get something similar to the next 
 
 1. To remove the deployed resource, navigate to the root directory and use the following command in your terminal
 ```sh
-  cdk destroy
+  cdk destroy --all
 ```
 
 2. It is recommended to check on the AWS Console if all the resources were properly deleted.
