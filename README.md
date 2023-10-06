@@ -65,14 +65,20 @@ After the deployment is completed, you should get something similar to the next 
 VITE_AWS_ACCOUNT_ID= Same account used for the ApiStack
 VITE_AWS_REGION= Same region used for the ApiStack
 VITE_AWS_API_GATEWAY_URL= Should be the API Gateway endpoint obtained on step 4
-VITE_AWS_COGNITO_USER_POOL_ID= Obtained from the Cognito using the AWS Console, as shown in next image
-VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID= Obtained from the Cognito "App integration" tab using the AWS Console, as shown in next image
+VITE_AWS_COGNITO_USER_POOL_ID= Obtained from the Cognito using the AWS Console, as shown in step 5.1
+VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID= Obtained from the Cognito "App integration" tab using the AWS Console, as shown in step 5.1
 ```
 
+5.1. VITE_AWS_COGNITO_USER_POOL_ID ->> Login into the AWS Console, and enter the Cognito service tab. The value can be found under the User Pool ID column, as shown in the next image
+![](./demo-images/console-cognito-pool-id.jpg)
+
+5.2 VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID ->> Click in the UserPool, then in the App integration tab. Scroll down the page until you find the App client list. The required value is under the Client ID column, as shown in the next image
+![](./demo-images/console-cognito-client-id.jpg)
+
 6. After the environment variables are set, install the project dependencies from the terminal
-   ``` sh
+``` sh
      npm install
-   ```
+```
 
 7. Use npm to build the Vue application
 ``` sh
