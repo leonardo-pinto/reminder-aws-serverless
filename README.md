@@ -34,7 +34,13 @@ Depending on your AWS account tier, some resources used in this project may resu
 ```sh
   git clone https://github.com/leonardo-pinto/reminder-aws-serverless.git
 ```
-2. In the root directory, change the filename of .env.example to .env, and complete with your aws account number and region to deploy the resources
+
+2. In the root directory, install the project dependencies
+```sh
+  npm install
+```
+
+3. In the root directory, change the filename of .env.example to .env, and complete with your aws account number and region to deploy the resources
 
 ```sh
   .env
@@ -42,14 +48,14 @@ Depending on your AWS account tier, some resources used in this project may resu
   AWS_REGION=your preferred region (e.g., us-east-1)
 ```
 
-3. Bootstrap CDK to enable the deployment of resources using the following command in your terminal:
+4. Bootstrap CDK to enable the deployment of resources using the following command in your terminal:
 ```sh
   cdk bootstrap aws://<ACCOUNT-NUMBER>/<REGION>
   // where ACCOUNT-NUMBER is your AWS account and REGION is the region in which you want to deploy your resources
 ```
 For more information or troubleshooting, please refer to [AWS documentation](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html)
 
-4. To deploy the Api stack, navigate to the root directory, and from the command line use the following:
+5. To deploy the Api stack, navigate to the root directory, and from the command line use the following:
 ```sh
   cdk deploy ApiStack
   // you can use the flag --require-approval never
@@ -59,33 +65,33 @@ After the deployment is completed, you should get something similar to the next 
 
 ![](./demo-images/api-stack-deploy.jpg)
 
-5. Navigate to the client directory (./client), and update the .env.example file by changing the filename to .env and adding the required information
+6. Navigate to the client directory (./client), and update the .env.example file by changing the filename to .env and adding the required information
 
 ``` sh
 VITE_AWS_ACCOUNT_ID= Same account used for the ApiStack
 VITE_AWS_REGION= Same region used for the ApiStack
 VITE_AWS_API_GATEWAY_URL= Should be the API Gateway endpoint obtained on step 4
-VITE_AWS_COGNITO_USER_POOL_ID= Obtained from the Cognito using the AWS Console, as shown in step 5.1
-VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID= Obtained from the Cognito "App integration" tab using the AWS Console, as shown in step 5.1
+VITE_AWS_COGNITO_USER_POOL_ID= Obtained from the Cognito using the AWS Console, as shown in step 6.1
+VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID= Obtained from the Cognito "App integration" tab using the AWS Console, as shown in step 6.1
 ```
 
-5.1. VITE_AWS_COGNITO_USER_POOL_ID ->> Login into the AWS Console, and enter the Cognito service tab. The value can be found under the User Pool ID column, as shown in the next image
+6.1. VITE_AWS_COGNITO_USER_POOL_ID ->> Login into the AWS Console, and enter the Cognito service tab. The value can be found under the User Pool ID column, as shown in the next image
 ![](./demo-images/console-cognito-pool-id.jpg)
 
-5.2 VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID ->> Click in the UserPool, then in the App integration tab. Scroll down the page until you find the App client list. The required value is under the Client ID column, as shown in the next image
+6.2 VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID ->> Click in the UserPool, then in the App integration tab. Scroll down the page until you find the App client list. The required value is under the Client ID column, as shown in the next image
 ![](./demo-images/console-cognito-client-id.jpg)
 
-6. After the environment variables are set, install the project dependencies from the terminal
+7. After the environment variables are set, install the project dependencies from the terminal
 ``` sh
      npm install
 ```
 
-7. Use npm to build the Vue application
+8. Use npm to build the Vue application
 ``` sh
   npm run build
 ```
 
-8. After the build is complete, navigate back to the root folder, and use the following command to deploy the Client stack
+9. After the build is complete, navigate back to the root folder, and use the following command to deploy the Client stack
 ``` sh
   cdk deploy ClientStack
   // you can use the flag --require-approval never
@@ -95,7 +101,7 @@ VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID= Obtained from the Cognito "App integr
 After the deployment is completed, you should get something similar to the next image, where you can find the newly generated CloudFront distribution url
 ![](./demo-images/client-stack-deploy.jpg)
 
-9. :boom: Now the application should be running on the CloudFront distribution url obtained in step 8. Optionally, you can find the url in CloudFront AWS Console
+10. :boom: Now the application should be running on the CloudFront distribution url obtained in step 8. Optionally, you can find the url in CloudFront AWS Console
 
 ![](./demo-images/app-demo.jpg)
 
