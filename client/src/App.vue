@@ -3,6 +3,7 @@
     :services="services"
     :login-mechanisms="['email']"
     :sign-up-attributes="['name']"
+    :key="`authenticator-${updatedAt}`"
   >
     <template v-slot="{ signOut, user }">
       <TheHeader
@@ -40,17 +41,28 @@ import TheHeader from "./layout/TheHeader.vue";
 import TheFooter from "./layout/TheFooter.vue";
 import RemindersList from "./components/RemindersList.vue";
 import CreateReminder from "./components/CreateReminder.vue";
+import { SignIn, SignUp, SignUpConfirmation } from "./types/auth";
 import { ref } from "vue";
 
+let tempPassword = "";
+
 const services = {
-  async handleSignIn(formData: any) {
-    const input = {
-      username: formData.username as string,
-      password: formData.password as string,
-    };
-    const result = await Auth.signIn(input);
+  async handleSignIn(formData: SignIn) {
+    const result = await Auth.signIn(formData);
+    tempPassword = formData.password;
     localStorage.setItem("token", result.signInUserSession.idToken.jwtToken);
-    return result;
+  },
+  async handleSignUp(formData: SignUp) {
+    await Auth.signUp(formData);
+    tempPassword = formData.password;
+  },
+  async handleConfirmSignUp(input: SignUpConfirmation) {
+    const { username, code } = input;
+    await Auth.confirmSignUp(username, code);
+    const result = await Auth.signIn(username, tempPassword);
+    tempPassword = "";
+    localStorage.setItem("token", result.signInUserSession.idToken.jwtToken);
+    updateKey(); // updates component key to redirect to app
   },
 };
 const updatedAt = ref("");
