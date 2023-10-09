@@ -101,7 +101,7 @@ VITE_AWS_COGNITO_USER_POOL_USER_CLIENT_ID= Obtained from the Cognito "App integr
 After the deployment is completed, you should get something similar to the next image, where you can find the newly generated CloudFront distribution url
 ![](./demo-images/client-stack-deploy.jpg)
 
-10. :boom: Now the application should be running on the CloudFront distribution url obtained in step 8. Optionally, you can find the url in CloudFront AWS Console
+10. :boom: Now the application should be running on the CloudFront distribution url obtained in step 9. Optionally, you can find the url in CloudFront AWS Console
 
 ![](./demo-images/app-demo.jpg)
 
