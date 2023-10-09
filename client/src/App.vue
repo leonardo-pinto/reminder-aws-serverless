@@ -53,8 +53,9 @@ const services = {
     localStorage.setItem("token", result.signInUserSession.idToken.jwtToken);
   },
   async handleSignUp(formData: SignUp) {
-    await Auth.signUp(formData);
     tempPassword = formData.password;
+    const result = await Auth.signUp(formData);
+    return result;
   },
   async handleConfirmSignUp(input: SignUpConfirmation) {
     const { username, code } = input;
@@ -63,6 +64,7 @@ const services = {
     tempPassword = "";
     localStorage.setItem("token", result.signInUserSession.idToken.jwtToken);
     updateKey(); // updates component key to redirect to app
+    return result;
   },
 };
 const updatedAt = ref("");
